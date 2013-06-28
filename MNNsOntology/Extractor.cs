@@ -27,6 +27,7 @@ namespace MNNsOntology
         {
             if (startLemmas == "" || endLemmas == "")
                 return 0;
+
             double prom = 0;
             Boolean fin = false;
             int cont = 0;
@@ -65,8 +66,11 @@ namespace MNNsOntology
                 foreach (XElement endLemmas in input.Elements())
                 {
                     double score = promScore(startLemmas.Element("name").Value, endLemmas.Element("name").Value);
-                    startLemmas.Add(endLemmas.Element("name"), score);
-                    Console.Out.WriteLine(String.Format("startLemmas: {0}; endLemmas: {1}; score: {2}", startLemmas.Element("name").Value, endLemmas.Element("name").Value, score));
+                    if (score > 0)
+                    {
+                        startLemmas.Add(new XElement(String.Format("n-{0}", endLemmas.Element("name").Value, score)));
+                        Console.Out.WriteLine(String.Format("startLemmas: {0}; endLemmas: {1}; score: {2}", startLemmas.Element("name").Value, endLemmas.Element("name").Value, score));
+                    }
                 }
             }
             input.Save("dataset/mnn.xml"); ;
