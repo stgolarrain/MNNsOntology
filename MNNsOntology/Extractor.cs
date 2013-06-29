@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Xml.Linq;
+using System.Threading.Tasks;
 
 namespace MNNsOntology
 {
@@ -67,19 +68,31 @@ namespace MNNsOntology
 
         public void generateMNN(XElement input)
         {
+            int count = input.Descendants("object").Count();
             foreach (XElement startLemmas in input.Elements())
             {
+                Dictionary<string, double> nodes = new Dictionary<string, double>();
+                Task[] tasks = new Task[count];
+                int i = 0;
                 foreach (XElement endLemmas in input.Elements())
                 {
-                    double score = promScore(startLemmas.Attribute("name").Value, endLemmas.Attribute("name").Value);
-                    if (score > 0)
-                    {
-                        XElement proof1 = new XElement("endLemmas", new XAttribute("name", endLemmas.Attribute("name").Value));
-                        proof1.Add(new XElement("score", score));
-                        startLemmas.Add(proof1);
-                        Console.Out.WriteLine(String.Format("startLemmas: {0}; endLemmas: {1}; score: {2}", startLemmas.Attribute("name").Value, endLemmas.Attribute("name").Value, score));
-                    }
+                    tasks[i] = Task.Run(() => nodes.Add(endLemmas.Attribute("name").Value, promScore(startLemmas.Attribute("name").Value, endLemmas.Attribute("name").Value)));
+                    i++;
                 }
+
+                Console.Out.WriteLine("Waiting threads ...");
+                Task.WaitAll(tasks);
+
+                foreach(KeyValuePair<string, double> pair in nodes)
+                {
+                    if (pair.Value > 0)
+                    {
+                        XElement proof1 = new XElement("endLemmas", new XAttribute("name", pair.Key));
+                        proof1.Add(new XElement("score", pair.Value));
+                        startLemmas.Add(proof1);
+                        Console.Out.WriteLine(String.Format("startLemmas: {0}; endLemmas: {1}; score: {2}", startLemmas.Attribute("name").Value, pair.Key, pair.Value));
+                    }
+                }   
             }
             input.Save("dataset/mnn.xml");
         }

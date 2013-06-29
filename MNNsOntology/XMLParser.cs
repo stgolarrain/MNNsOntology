@@ -38,13 +38,14 @@ namespace MNNsOntology
                 {
                     if (n.ChildNodes[1].InnerText.Equals("0"))
                     {
+                        string value = n.ChildNodes[0].InnerText.ToLower().Replace("\n", "").Replace("\b", "");
                         List<XElement> uniqueQuery = (from el in _outputXml.Elements("object")
-                                                      where (string)el == n.ChildNodes[0].InnerText.ToLower().Replace("\n", "").Replace("\b", "")
+                                                      where (string)el.Attribute("name") == value
                                                       select el).ToList();
                         if (uniqueQuery.Count == 0)
                         {
                             _outputXml.Add(new XElement("object", new XAttribute("name", n.ChildNodes[0].InnerText.ToLower().Replace("\n", "").Replace("\b", ""))));
-                            Console.WriteLine("Adding Element " + n.ChildNodes[0].InnerText.ToLower().Replace("\n", "").Replace("\b", ""));
+                            Console.WriteLine("Adding Element " + value);
                         }
                     }
                 }
