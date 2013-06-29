@@ -43,7 +43,7 @@ namespace MNNsOntology
                                                       select el).ToList();
                         if (uniqueQuery.Count == 0)
                         {
-                            _outputXml.Add(new XElement("object", new XElement("name", n.ChildNodes[0].InnerText.ToLower().Replace("\n", "").Replace("\b", ""))));
+                            _outputXml.Add(new XElement("object", new XAttribute("name", n.ChildNodes[0].InnerText.ToLower().Replace("\n", "").Replace("\b", ""))));
                             Console.WriteLine("Adding Element " + n.ChildNodes[0].InnerText.ToLower().Replace("\n", "").Replace("\b", ""));
                         }
                     }

@@ -25,37 +25,43 @@ namespace MNNsOntology
 
         public double promScore(string startLemmas, string endLemmas)
         {
-            if (startLemmas == "" || endLemmas == "")
+            if (startLemmas.Equals("") || endLemmas.Equals(""))
                 return 0;
 
             double prom = 0;
             Boolean fin = false;
-            int cont = 0;
+            int cont_arcos = 0;
+            int cont_consulta = 0;
+
             while (!fin)
             {
-                HttpResponseMessage response = client.GetAsync("http://conceptnet5.media.mit.edu/data/5.1/search?startLemmas=" + startLemmas + "&endLemmas=" + endLemmas + "&offset=" + cont + "&limit=" + (cont + 50)).Result;  // Blocking call!
+                HttpResponseMessage response = client.GetAsync("http://conceptnet5.media.mit.edu/data/5.1/search?startLemmas=" + startLemmas + "&endLemmas=" + endLemmas + "&offset=" + cont_arcos + "&limit=5000").Result;  // Blocking call!
+                cont_consulta++;
                 if (response.IsSuccessStatusCode)
                 {
                     // Parse the response body. Blocking!
                     var arco = response.Content.ReadAsAsync<Query>().Result;
 
-                    if (cont == 0 && arco.edges.Count == 0)
-                        return 0;
-
                     if (arco.edges.Count != 0)
-                    {
                         foreach (Edge e in arco.edges)
                         {
                             prom = prom + e.score;
-                            cont++;
+                            cont_arcos++;
                         }
-                    }
                     else
                         fin = true;
                 }
+                if (cont_consulta * 5000 > cont_arcos)
+                    fin = true;
             }
-            prom = prom / cont;
 
+            if (cont_arcos == 0)
+                return 0;
+            else
+                prom = prom / cont_arcos;
+
+            /*Console.WriteLine("El total de arcos fue: " + cont_arcos);
+            Console.WriteLine("El total de consultas fue: " + cont_consulta);*/
             return prom;
         }
 
@@ -65,15 +71,17 @@ namespace MNNsOntology
             {
                 foreach (XElement endLemmas in input.Elements())
                 {
-                    double score = promScore(startLemmas.Element("name").Value, endLemmas.Element("name").Value);
+                    double score = promScore(startLemmas.Attribute("name").Value, endLemmas.Attribute("name").Value);
                     if (score > 0)
                     {
-                        startLemmas.Add(new XElement(String.Format("n-{0}", endLemmas.Element("name").Value, score)));
-                        Console.Out.WriteLine(String.Format("startLemmas: {0}; endLemmas: {1}; score: {2}", startLemmas.Element("name").Value, endLemmas.Element("name").Value, score));
+                        XElement proof1 = new XElement("endLemmas", new XAttribute("name", endLemmas.Attribute("name").Value));
+                        proof1.Add(new XElement("score", score));
+                        startLemmas.Add(proof1);
+                        Console.Out.WriteLine(String.Format("startLemmas: {0}; endLemmas: {1}; score: {2}", startLemmas.Attribute("name").Value, endLemmas.Attribute("name").Value, score));
                     }
                 }
             }
-            input.Save("dataset/mnn.xml"); ;
+            input.Save("dataset/mnn.xml");
         }
     }
 }
