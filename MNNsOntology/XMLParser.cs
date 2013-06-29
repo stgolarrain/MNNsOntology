@@ -33,16 +33,19 @@ namespace MNNsOntology
             {
                 XmlDocument _docXml = new XmlDocument();
                 _docXml.Load(file);
-                XmlNodeList objectList = _docXml.GetElementsByTagName("name");
+                XmlNodeList objectList = _docXml.GetElementsByTagName("object");
                 foreach (XmlNode n in objectList)
                 {
-                    List<XElement> uniqueQuery = (from el in _outputXml.Elements("object")
-                                                  where (string)el == n.InnerText.Replace("\n", "").Replace("\b", "").Replace(" ", "")
-                                                  select el).ToList();
-                    if (uniqueQuery.Count == 0)
+                    if (n.ChildNodes[1].InnerText.Equals("0"))
                     {
-                        _outputXml.Add(new XElement("object", new XElement("name", n.InnerText.Replace("\n", "").Replace("\b", "").Replace(" ", ""))));
-                        Console.WriteLine("Adding Element " + n.InnerText.Replace("\n", "").Replace("\b", "").Replace(" ", ""));
+                        List<XElement> uniqueQuery = (from el in _outputXml.Elements("object")
+                                                      where (string)el == n.ChildNodes[0].InnerText.ToLower().Replace("\n", "").Replace("\b", "")
+                                                      select el).ToList();
+                        if (uniqueQuery.Count == 0)
+                        {
+                            _outputXml.Add(new XElement("object", new XElement("name", n.ChildNodes[0].InnerText.ToLower().Replace("\n", "").Replace("\b", ""))));
+                            Console.WriteLine("Adding Element " + n.ChildNodes[0].InnerText.ToLower().Replace("\n", "").Replace("\b", ""));
+                        }
                     }
                 }
             }
