@@ -12,11 +12,11 @@ namespace MNNsOntology
     class Extractor
     {
         HttpClient client;
+        static int requesThread = 50;
 
         public Extractor()
         {
             client = new HttpClient();
-            int i = 10;
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
@@ -68,17 +68,29 @@ namespace MNNsOntology
             foreach (XElement startLemmas in input.Elements())
             {
                 Dictionary<string, double> nodes = new Dictionary<string, double>();
-                Task[] tasks = new Task[count];
-                //int i = 0;
+                List<Task> tasks = new List<Task>();
+
                 foreach (XElement endLemmas in input.Elements())
                 {
-                    //tasks[i] = Task.Run(() => nodes.Add(endLemmas.Attribute("name").Value, promScore(startLemmas.Attribute("name").Value, endLemmas.Attribute("name").Value)));
-                    //i++;
-                    nodes.Add(endLemmas.Attribute("name").Value, promScore(startLemmas.Attribute("name").Value, endLemmas.Attribute("name").Value));
+                    tasks.Add(Task.Run(() => nodes.Add(endLemmas.Attribute("name").Value, promScore(startLemmas.Attribute("name").Value, endLemmas.Attribute("name").Value))));
+                    
+                    for (int i = 0; i < tasks.Count; i++)
+                    {
+                        if (tasks[i].Status == TaskStatus.RanToCompletion)
+                            tasks.RemoveAt(i);
+                    }
+
+                    if (tasks.Count >= requesThread)
+                    {
+                        Console.Out.WriteLine("Waiting for Any thread to complete...");
+                        Task.WaitAny(tasks.ToArray());
+                    }
+
+                    //nodes.Add(endLemmas.Attribute("name").Value, promScore(startLemmas.Attribute("name").Value, endLemmas.Attribute("name").Value));
                 }
 
                 Console.Out.WriteLine("Waiting threads ...");
-                //Task.WaitAll(tasks, -1);
+                Task.WaitAll(tasks.ToArray(), -1);
 
                 foreach(KeyValuePair<string, double> pair in nodes)
                 {
