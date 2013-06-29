@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Xml.Linq;
-using System.Threading.Tasks;
 
 namespace MNNsOntology
 {
@@ -17,11 +16,8 @@ namespace MNNsOntology
         public Extractor()
         {
             client = new HttpClient();
-            client.BaseAddress = new Uri("http://localhost:9000/");
-
-            // Add an Accept header for JSON format.
-            client.DefaultRequestHeaders.Accept.Add(
-                new MediaTypeWithQualityHeaderValue("application/json"));
+            int i = 10;
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
         public double promScore(string startLemmas, string endLemmas)
@@ -73,15 +69,16 @@ namespace MNNsOntology
             {
                 Dictionary<string, double> nodes = new Dictionary<string, double>();
                 Task[] tasks = new Task[count];
-                int i = 0;
+                //int i = 0;
                 foreach (XElement endLemmas in input.Elements())
                 {
-                    tasks[i] = Task.Run(() => nodes.Add(endLemmas.Attribute("name").Value, promScore(startLemmas.Attribute("name").Value, endLemmas.Attribute("name").Value)));
-                    i++;
+                    //tasks[i] = Task.Run(() => nodes.Add(endLemmas.Attribute("name").Value, promScore(startLemmas.Attribute("name").Value, endLemmas.Attribute("name").Value)));
+                    //i++;
+                    nodes.Add(endLemmas.Attribute("name").Value, promScore(startLemmas.Attribute("name").Value, endLemmas.Attribute("name").Value));
                 }
 
                 Console.Out.WriteLine("Waiting threads ...");
-                Task.WaitAll(tasks);
+                //Task.WaitAll(tasks, -1);
 
                 foreach(KeyValuePair<string, double> pair in nodes)
                 {
