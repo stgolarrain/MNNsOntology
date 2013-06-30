@@ -13,7 +13,7 @@ namespace MNNsOntology
     {
         static void Main(string[] args)
         {
-            DateTime initial = DateTime.Now;
+            /*DateTime initial = DateTime.Now;
             Console.Out.WriteLine("Reading XML");
 
             XMLParser xmlParser = new XMLParser("LabelMe");
@@ -23,7 +23,7 @@ namespace MNNsOntology
             extractor.generateMNN(xmlParser.getOutput());
 
             DateTime final = DateTime.Now;
-            Console.Out.WriteLine(String.Format("T. Inicial: {0}; T. Final: {1}", initial, final));
+            Console.Out.WriteLine(String.Format("T. Inicial: {0}; T. Final: {1}", initial, final));*/
 
             MNNInference mnnInference = new MNNInference("dataset/mnn.xml", "dataset/objects.xml");
             Console.WriteLine(mnnInference.Inference("input.xml"));

@@ -42,7 +42,9 @@ namespace MNNsOntology
                                  where element.Attribute("name").Value == name
                                  select element);
                         if (v.Any())
-                            _score[v.First().Attribute("name").Value] += Convert.ToDouble(v.First().Element("score").Value);
+                        {
+                            _score[mnnElement.Attribute("name").Value] += Convert.ToDouble(v.First().Element("score").Value);
+                        }
                     }
                 }
             }
