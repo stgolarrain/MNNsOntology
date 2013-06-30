@@ -82,8 +82,8 @@ namespace MNNsOntology
 
                     if (tasks.Count >= requesThread)
                     {
-                        Console.Out.WriteLine("Waiting for Any thread to complete...");
-                        Task.WaitAny(tasks.ToArray());
+                        Console.Out.WriteLine("Waiting for any thread to complete...");
+                        Task.WaitAny(tasks.ToArray(),-1);
                     }
 
                     //nodes.Add(endLemmas.Attribute("name").Value, promScore(startLemmas.Attribute("name").Value, endLemmas.Attribute("name").Value));

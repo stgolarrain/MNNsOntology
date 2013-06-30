@@ -25,8 +25,8 @@ namespace MNNsOntology
             DateTime final = DateTime.Now;
             Console.Out.WriteLine(String.Format("T. Inicial: {0}; T. Final: {1}", initial, final));
 
-            /*MNNInference mnnInference = new MNNInference("dataset/mnn.xml", "dataset/objects.xml");
-            mnnInference.Inference("input.xml");*/
+            MNNInference mnnInference = new MNNInference("dataset/mnn.xml", "dataset/objects.xml");
+            Console.WriteLine(mnnInference.Inference("input.xml"));
 
             Console.Read();
         }

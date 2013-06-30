@@ -24,6 +24,10 @@ namespace MNNsOntology
 
         public string Inference(string input)
         {
+            Console.Out.WriteLine("** Inference Input **");
+            foreach (string name in XElement.Load(input).Elements("object").Attributes("name"))
+                Console.Out.WriteLine(name);
+
             foreach (XElement mnnElement in _mnn.Elements("object"))
             {
                 foreach (string name in XElement.Load(input).Elements("object").Attributes("name"))
@@ -36,9 +40,7 @@ namespace MNNsOntology
                 }
             }
 
-            Console.Out.WriteLine(Max().Key + " : " + Max().Value);
-
-            return "test";
+            return Max().Key;
         }
 
         private KeyValuePair<string, double> Max()
