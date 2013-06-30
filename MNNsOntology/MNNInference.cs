@@ -30,13 +30,20 @@ namespace MNNsOntology
 
             foreach (XElement mnnElement in _mnn.Elements("object"))
             {
-                foreach (string name in XElement.Load(input).Elements("object").Attributes("name"))
+                var objectNotInputData = (from element in XElement.Load(input).Elements("object")
+                                          where element.Attribute("name").Value == mnnElement.Attribute("name").Value
+                                          select element);
+
+                if (!objectNotInputData.Any())
                 {
-                    var v = (from element in mnnElement.Elements("endLemmas")
-                            where element.Attribute("name").Value == name
-                            select element);
-                    if (v.Any())
-                        _score[v.First().Attribute("name").Value] += Convert.ToDouble(v.First().Element("score").Value);
+                    foreach (string name in XElement.Load(input).Elements("object").Attributes("name"))
+                    {
+                        var v = (from element in mnnElement.Elements("endLemmas")
+                                 where element.Attribute("name").Value == name
+                                 select element);
+                        if (v.Any())
+                            _score[v.First().Attribute("name").Value] += Convert.ToDouble(v.First().Element("score").Value);
+                    }
                 }
             }
 
