@@ -24,32 +24,43 @@ namespace MNNsOntology
 
         public string Inference(string input)
         {
-            Console.Out.WriteLine("** Inference Input **");
-            foreach (string name in XElement.Load(input).Elements("object").Attributes("name"))
-                Console.Out.WriteLine(name);
+            Console.Out.WriteLine("\n** Inference Input **");
+            Console.Out.WriteLine("File Name: " + XElement.Load(input).Attribute("filename").Value);
+            foreach (XElement inputElement in XElement.Load(input).Elements("object"))
+                Console.Out.WriteLine(inputElement.Attribute("name").Value);
 
-            foreach (XElement mnnElement in _mnn.Elements("object"))
+            Console.WriteLine("");
+            foreach (XElement inputElement in XElement.Load(input).Elements("object"))
             {
-                var objectNotInputData = (from element in XElement.Load(input).Elements("object")
-                                          where element.Attribute("name").Value == mnnElement.Attribute("name").Value
-                                          select element);
+                var objectsOnInputElement = (from element in _mnn.Elements("object")
+                                            where element.Attribute("name").Value == inputElement.Attribute("name").Value
+                                            select element);
 
-                if (!objectNotInputData.Any())
+                foreach (XElement endLemmas in objectsOnInputElement.Elements("endLemmas"))
                 {
-                    foreach (string name in XElement.Load(input).Elements("object").Attributes("name"))
-                    {
-                        var v = (from element in mnnElement.Elements("endLemmas")
-                                 where element.Attribute("name").Value == name
-                                 select element);
-                        if (v.Any())
-                        {
-                            _score[mnnElement.Attribute("name").Value] += Convert.ToDouble(v.First().Element("score").Value);
-                        }
-                    }
+                    _score[endLemmas.Attribute("name").Value] += Convert.ToDouble(endLemmas.Element("score").Value);
                 }
             }
 
+            //ExcludeOnInput(input);
+            KeyValuePair<string, double>[] sorted = (from kv in _score orderby kv.Value select kv).ToArray();
+
+            for(int i = sorted.Length - 1; i > sorted.Length - 11; i--)
+                Console.WriteLine(sorted[i].Key + " : " + sorted[i].Value);
+
+            Console.WriteLine("========================================\n");
+            Console.WriteLine("Therory Result : " + XElement.Load(input).Element("result").Attribute("name").Value);
+            Console.WriteLine("Score of Therory Result : " + _score[XElement.Load(input).Element("result").Attribute("name").Value]);
+
             return Max().Key;
+        }
+
+        private void ExcludeOnInput(string input)
+        {
+            foreach (XElement inputElement in XElement.Load(input).Elements("object"))
+            {
+                _score[inputElement.Attribute("name").Value] = 0;   
+            }
         }
 
         private KeyValuePair<string, double> Max()
@@ -61,6 +72,31 @@ namespace MNNsOntology
                     max = new KeyValuePair<string, double>(pair.Key, pair.Value);
             }
             return max;
+        }
+
+        public void GenerateSageGraph(string input)
+        {
+            string result = "g = DiGraph({";
+            foreach (XElement obj in XElement.Load(input).Elements("object"))
+            {
+                result += String.Format("'{0}' : {{", obj.Attribute("name").Value);
+                foreach (XElement node in obj.Elements("endLemmas"))
+                {
+                    result += String.Format("'{0}' : {1}", node.Attribute("name").Value, node.Element("score").Value);
+                    if (node.NextNode != null)
+                    {
+                        result += ",";
+                    }
+
+                }
+
+                
+                result += "},";
+            }
+            result += "})";
+            System.IO.StreamWriter file = new System.IO.StreamWriter("dataset/sage_graph.txt");
+            file.WriteLine(result);
+            file.Close();
         }
     }
 }

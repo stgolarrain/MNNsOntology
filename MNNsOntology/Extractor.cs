@@ -12,7 +12,8 @@ namespace MNNsOntology
     class Extractor
     {
         HttpClient client;
-        static int requesThread = 50;
+        static int requesThread = 1000;
+        List<Task> tasks;
 
         public Extractor()
         {
@@ -32,24 +33,37 @@ namespace MNNsOntology
 
             while (!fin)
             {
-                HttpResponseMessage response = client.GetAsync("http://conceptnet5.media.mit.edu/data/5.1/search?startLemmas=" + startLemmas + "&endLemmas=" + endLemmas + "&offset=" + cont_arcos + "&limit=5000").Result;  // Blocking call!
-                cont_consulta++;
-                if (response.IsSuccessStatusCode)
+            request:
+                try
                 {
-                    // Parse the response body. Blocking!
-                    var arco = response.Content.ReadAsAsync<Query>().Result;
+                    Console.WriteLine(startLemmas + " - " + endLemmas);
+                    HttpResponseMessage response = client.GetAsync("http://conceptnet5.media.mit.edu/data/5.1/search?startLemmas=" + startLemmas + "&endLemmas=" + endLemmas + "&offset=" + cont_arcos + "&limit=5000").Result;  // Blocking call!
+                    cont_consulta++;
+                    if (response.IsSuccessStatusCode)
+                    {
+                        // Parse the response body. Blocking!
+                        var arco = response.Content.ReadAsAsync<Query>().Result;
 
-                    if (arco.edges.Count != 0)
-                        foreach (Edge e in arco.edges)
-                        {
-                            prom = prom + e.score;
-                            cont_arcos++;
-                        }
-                    else
+                        if (arco.edges.Count != 0)
+                            foreach (Edge e in arco.edges)
+                            {
+                                prom = prom + e.score;
+                                cont_arcos++;
+                            }
+                        else
+                            fin = true;
+                    }
+                    if (cont_consulta * 5000 > cont_arcos)
                         fin = true;
                 }
-                if (cont_consulta * 5000 > cont_arcos)
-                    fin = true;
+                catch (Exception exception)
+                {
+                    Console.WriteLine(exception.Message);
+                    Task.WaitAny(tasks.ToArray());
+                    goto request;
+                }
+
+                
             }
 
             if (cont_arcos == 0)
@@ -67,8 +81,9 @@ namespace MNNsOntology
             int count = input.Descendants("object").Count();
             foreach (XElement startLemmas in input.Elements())
             {
+                DateTime initial = DateTime.Now;
                 Dictionary<string, double> nodes = new Dictionary<string, double>();
-                List<Task> tasks = new List<Task>();
+                tasks = new List<Task>();
 
                 foreach (XElement endLemmas in input.Elements())
                 {
@@ -82,7 +97,7 @@ namespace MNNsOntology
 
                     if (tasks.Count >= requesThread)
                     {
-                        Console.Out.WriteLine("Waiting for any thread to complete...");
+                        Console.Out.WriteLine(String.Format("{0} : waiting for any thread to complete...", startLemmas.Attribute("name")));
                         Task.WaitAny(tasks.ToArray(),-1);
                     }
 
@@ -101,7 +116,8 @@ namespace MNNsOntology
                         startLemmas.Add(proof1);
                         Console.Out.WriteLine(String.Format("startLemmas: {0}; endLemmas: {1}; score: {2}", startLemmas.Attribute("name").Value, pair.Key, pair.Value));
                     }
-                }   
+                }
+                Console.Out.WriteLine(String.Format("{0}: T. Inicial: {1}; T. Final: {2}", startLemmas.Attribute("name"), initial, DateTime.Now));
             }
             input.Save("dataset/mnn.xml");
         }
